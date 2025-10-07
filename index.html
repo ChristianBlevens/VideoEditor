@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor - Professional Timeline Editor</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Professional Libraries -->
+    <!-- WaveSurfer.js for audio waveform visualization -->
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+
+    <!-- Interact.js for drag, drop, and resize -->
+    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.19/dist/interact.min.js"></script>
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Top Toolbar -->
+        <header class="toolbar">
+            <div class="toolbar-section toolbar-left">
+                <button class="btn btn-icon" title="New Project (Ctrl+N)" id="new-btn">
+                    <i class="fas fa-file"></i>
+                </button>
+                <button class="btn btn-icon" title="Open Project (Ctrl+O)" id="open-btn">
+                    <i class="fas fa-folder-open"></i>
+                </button>
+                <button class="btn btn-icon" title="Save Project (Ctrl+S)" id="save-btn">
+                    <i class="fas fa-save"></i>
+                </button>
+                <div class="divider"></div>
+                <button class="btn btn-icon" title="Undo (Ctrl+Z)" id="undo-btn">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="btn btn-icon" title="Redo (Ctrl+Y)" id="redo-btn">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+
+            <div class="toolbar-section toolbar-center">
+                <h1 class="app-title">Real-Time Video Editor</h1>
+            </div>
+
+            <div class="toolbar-section toolbar-right">
+                <span class="project-name" id="project-name">Untitled Project</span>
+                <button class="btn btn-primary" id="export-btn">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+            <!-- Left Sidebar - Project Panel -->
+            <aside class="sidebar sidebar-left">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Project Media</h3>
+                    </div>
+                    <div class="panel-content">
+                        <div class="file-list" id="media-list">
+                            <!-- Sample media files -->
+                            <div class="file-item" draggable="true" data-type="video" data-src="sample1.mp4">
+                                <i class="fas fa-video"></i>
+                                <span>Interview.mp4</span>
+                                <span class="file-duration">05:23</span>
+                            </div>
+                            <div class="file-item" draggable="true" data-type="video" data-src="sample2.mp4">
+                                <i class="fas fa-video"></i>
+                                <span>Screencast.mp4</span>
+                                <span class="file-duration">08:15</span>
+                            </div>
+                            <div class="file-item" draggable="true" data-type="audio" data-src="music.mp3">
+                                <i class="fas fa-music"></i>
+                                <span>Background Music.mp3</span>
+                                <span class="file-duration">03:45</span>
+                            </div>
+                            <div class="file-item" draggable="true" data-type="audio" data-src="voiceover.mp3">
+                                <i class="fas fa-microphone"></i>
+                                <span>Voiceover.mp3</span>
+                                <span class="file-duration">04:30</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-block" id="import-btn">
+                            <i class="fas fa-plus"></i> Import Media
+                        </button>
+
+                        <div class="recent-projects">
+                            <h4>Recent Projects</h4>
+                            <div class="recent-project-item">
+                                <i class="fas fa-history"></i>
+                                <span>Tutorial Edit.vep</span>
+                            </div>
+                            <div class="recent-project-item">
+                                <i class="fas fa-history"></i>
+                                <span>Podcast Episode 5.vep</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center - Video Preview & Timeline -->
+            <main class="main-content">
+                <!-- Video Preview -->
+                <div class="preview-container">
+                    <div class="video-preview">
+                        <!-- Layered video support: top track overlays bottom track -->
+                        <video id="video-layer-1" class="video-element video-layer-bottom">
+                            <source src="" type="video/mp4">
+                        </video>
+                        <video id="video-layer-2" class="video-element video-layer-top">
+                            <source src="" type="video/mp4">
+                        </video>
+
+                        <!-- Subtitle overlay -->
+                        <div class="subtitle-overlay" id="subtitle-overlay">
+                            <p class="subtitle-text"></p>
+                        </div>
+
+                        <div class="video-placeholder">
+                            <i class="fas fa-film"></i>
+                            <p>Import or drag videos to timeline to begin editing</p>
+                        </div>
+                    </div>
+
+                    <!-- Playback Controls -->
+                    <div class="playback-controls">
+                        <button class="btn btn-icon" id="play-btn" title="Play/Pause (Space)">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="btn btn-icon" id="rewind-btn" title="Rewind (J)">
+                            <i class="fas fa-backward"></i>
+                        </button>
+                        <button class="btn btn-icon" id="forward-btn" title="Forward (L)">
+                            <i class="fas fa-forward"></i>
+                        </button>
+                        <button class="btn btn-icon" id="prev-frame-btn" title="Previous Frame (←)">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button class="btn btn-icon" id="next-frame-btn" title="Next Frame (→)">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+
+                        <div class="time-display">
+                            <span id="current-time">00:00:00:00</span>
+                            <span>/</span>
+                            <span id="total-time">00:00:00:00</span>
+                        </div>
+
+                        <div class="playback-speed">
+                            <select id="speed-selector" class="speed-select">
+                                <option value="0.25">0.25x</option>
+                                <option value="0.5">0.5x</option>
+                                <option value="1" selected>1x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2x</option>
+                            </select>
+                        </div>
+
+                        <div class="volume-control">
+                            <button class="btn btn-icon" id="mute-btn" title="Mute (M)">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <input type="range" class="volume-slider" min="0" max="100" value="100">
+                            <span class="volume-label">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Container -->
+                <div class="timeline-container">
+                    <div class="timeline-toolbar">
+                        <div class="timeline-tools">
+                            <button class="btn btn-sm" title="Split Clip (S)" id="split-btn">
+                                <i class="fas fa-cut"></i> Split
+                            </button>
+                            <button class="btn btn-sm" title="Delete Clip (Del)" id="delete-btn">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            <button class="btn btn-sm" title="Mute Clip (M)" id="mute-clip-btn">
+                                <i class="fas fa-volume-mute"></i> Mute
+                            </button>
+                            <div class="divider"></div>
+                            <button class="btn btn-sm" title="Set In Point (I)" id="in-point-btn">
+                                <i class="fas fa-sign-in-alt"></i> In
+                            </button>
+                            <button class="btn btn-sm" title="Set Out Point (O)" id="out-point-btn">
+                                <i class="fas fa-sign-out-alt"></i> Out
+                            </button>
+                            <div class="divider"></div>
+                            <button class="btn btn-sm" title="Zoom Out" id="zoom-out-btn">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="btn btn-sm" title="Reset Zoom (100%)" id="zoom-reset-btn">
+                                100%
+                            </button>
+                            <button class="btn btn-sm" title="Zoom In" id="zoom-in-btn">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <span class="zoom-level" id="zoom-level">100%</span>
+                        </div>
+                        <div class="timeline-view-options">
+                            <label>
+                                <input type="checkbox" id="show-waveforms" checked> Waveforms
+                            </label>
+                            <label>
+                                <input type="checkbox" id="show-transcripts" checked> Transcripts
+                            </label>
+                            <label>
+                                <input type="checkbox" id="show-markers" checked> Markers
+                            </label>
+                            <label class="snap-option">
+                                <input type="checkbox" id="snap-to-grid" checked> Snap
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Tracks -->
+                    <div class="timeline-wrapper" id="timeline-wrapper">
+                        <!-- Time Ruler -->
+                        <div class="time-ruler">
+                            <div class="time-ruler-header">Time</div>
+                            <div class="time-markers" id="time-markers"></div>
+                        </div>
+
+                        <!-- Playhead (vertical scrubber) -->
+                        <div class="playhead" id="playhead">
+                            <div class="playhead-handle"></div>
+                        </div>
+
+                        <!-- In Point Marker -->
+                        <div class="in-point-marker" id="in-point-marker" style="display: none;">
+                            <div class="in-point-handle">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </div>
+                        </div>
+
+                        <!-- Out Point Marker -->
+                        <div class="out-point-marker" id="out-point-marker" style="display: none;">
+                            <div class="out-point-handle">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
+                        </div>
+
+                        <!-- Track 1 -->
+                        <div class="track" data-track-id="track-1">
+                            <div class="track-header">
+                                <div class="track-controls">
+                                    <button class="btn-icon-sm track-lock-btn" title="Lock Track">
+                                        <i class="fas fa-lock-open"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-visible-btn" title="Show/Hide Track">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-mute-btn" title="Mute Track">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                </div>
+                                <span class="track-label">Track 1</span>
+                                <input type="range" class="track-volume" min="0" max="100" value="100" title="Track Volume">
+                            </div>
+                            <div class="track-content">
+                                <!-- Clips will be generated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Track 1 - Attached Audio (Hidden) -->
+                        <div class="track audio-track audio-track-attached" data-track-id="track-1-audio" style="display: none;">
+                            <div class="track-header">
+                                <span class="track-label track-label-small">
+                                    <i class="fas fa-link"></i> Audio
+                                </span>
+                            </div>
+                            <div class="track-content" data-linked="video-1">
+                                <!-- Attached audio clips will be generated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Track 2 -->
+                        <div class="track" data-track-id="track-2">
+                            <div class="track-header">
+                                <div class="track-controls">
+                                    <button class="btn-icon-sm track-lock-btn" title="Lock Track">
+                                        <i class="fas fa-lock-open"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-visible-btn" title="Show/Hide Track">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-mute-btn" title="Mute Track">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                </div>
+                                <span class="track-label">Track 2</span>
+                                <input type="range" class="track-volume" min="0" max="100" value="100" title="Track Volume">
+                            </div>
+                            <div class="track-content">
+                                <!-- Clips will be generated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Track 2 - Attached Audio (Hidden) -->
+                        <div class="track audio-track audio-track-attached" data-track-id="track-2-audio" style="display: none;">
+                            <div class="track-header">
+                                <span class="track-label track-label-small">
+                                    <i class="fas fa-link"></i> Audio
+                                </span>
+                            </div>
+                            <div class="track-content" data-linked="video-2">
+                                <!-- Attached audio clips will be generated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Track 3 -->
+                        <div class="track" data-track-id="track-3">
+                            <div class="track-header">
+                                <div class="track-controls">
+                                    <button class="btn-icon-sm track-lock-btn" title="Lock Track">
+                                        <i class="fas fa-lock-open"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-solo-btn" title="Solo Track">
+                                        <i class="fas fa-headphones"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-mute-btn" title="Mute Track">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                </div>
+                                <span class="track-label">Track 3</span>
+                                <input type="range" class="track-volume" min="0" max="100" value="80" title="Track Volume">
+                            </div>
+                            <div class="track-content">
+                                <!-- Clips will be generated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Track 4 -->
+                        <div class="track" data-track-id="track-4">
+                            <div class="track-header">
+                                <div class="track-controls">
+                                    <button class="btn-icon-sm track-lock-btn" title="Lock Track">
+                                        <i class="fas fa-lock-open"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-solo-btn" title="Solo Track">
+                                        <i class="fas fa-headphones"></i>
+                                    </button>
+                                    <button class="btn-icon-sm track-mute-btn" title="Mute Track">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                </div>
+                                <span class="track-label">Track 4</span>
+                                <input type="range" class="track-volume" min="0" max="100" value="100" title="Track Volume">
+                            </div>
+            <div class="track-content">
+                                <!-- Empty track ready for content -->
+                            </div>
+                        </div>
+
+                        <!-- Marker Track -->
+                        <div class="track marker-track" data-track-id="markers">
+                            <div class="track-header">
+                                <span class="track-label">
+                                    <i class="fas fa-bookmark"></i> Markers
+                                </span>
+                            </div>
+                            <div class="track-content" id="markers-track-content">
+                                <!-- Markers will be generated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar - Transcript & Properties -->
+            <aside class="sidebar sidebar-right">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="transcript">
+                        <i class="fas fa-closed-captioning"></i> Transcript
+                    </button>
+                    <button class="tab-btn" data-tab="properties">
+                        <i class="fas fa-sliders-h"></i> Properties
+                    </button>
+                    <button class="tab-btn" data-tab="effects">
+                        <i class="fas fa-magic"></i> Effects
+                    </button>
+                </div>
+
+                <!-- Transcript Panel -->
+                <div class="panel tab-content active" id="transcript-panel">
+                    <div class="panel-header">
+                        <button class="btn btn-primary btn-sm btn-block" id="transcribe-btn">
+                            <i class="fas fa-microphone"></i> Transcribe Selected Clip
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <!-- AI-powered search buttons -->
+                        <div class="search-shortcuts">
+                            <button class="btn btn-sm btn-outline" id="find-filler-btn">
+                                <i class="fas fa-filter"></i> Find Filler Words
+                            </button>
+                            <button class="btn btn-sm btn-outline" id="find-profanity-btn">
+                                <i class="fas fa-ban"></i> Find Profanity
+                            </button>
+                            <div class="pause-detection-row">
+                                <button class="btn btn-sm btn-outline" id="find-pauses-btn">
+                                    <i class="fas fa-pause"></i> Find Pauses
+                                </button>
+                                <input type="number" class="input input-sm pause-duration-input" id="pause-duration"
+                                       min="0.1" max="10" step="0.1" value="2.0" placeholder="2.0">
+                                <span class="pause-label">seconds</span>
+                            </div>
+                        </div>
+
+                        <!-- Target Words Entry -->
+                        <div class="target-words-section">
+                            <label class="section-label">Target Words/Phrases</label>
+                            <textarea class="target-input" id="target-words"
+                                      placeholder="Add words, phrases, or pauses to target...&#10;Example: um, uh, like, pause(2.0s)"
+                                      rows="2"></textarea>
+                            <div class="target-actions-row">
+                                <button class="btn btn-sm btn-primary" id="isolate-targets-btn" title="Keep only targets">
+                                    <i class="fas fa-check-circle"></i> Isolate
+                                </button>
+                                <button class="btn btn-sm btn-danger" id="remove-targets-btn" title="Remove all targets">
+                                    <i class="fas fa-times-circle"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search Box -->
+                        <div class="search-box">
+                            <input type="text" placeholder="Search transcript..." class="search-input" id="transcript-search">
+                            <button class="btn btn-icon-sm" title="Previous Match (Shift+F3)" id="prev-match-btn">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                            <button class="btn btn-icon-sm" title="Next Match (F3)" id="next-match-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+
+                        <!-- Search Results Counter -->
+                        <div class="search-results" id="search-results" style="display: none;">
+                            <span class="result-count">0 results</span>
+                        </div>
+
+                        <!-- Transcript Content (clickable, timestamped) -->
+                        <div class="transcript-content" id="transcript-content">
+                            <!-- Transcript items generated procedurally -->
+                        </div>
+
+                        <!-- Export Transcript -->
+                        <div class="transcript-export">
+                            <button class="btn btn-sm btn-block" id="export-transcript-btn">
+                                <i class="fas fa-file-export"></i> Export Transcript
+                            </button>
+                            <select class="export-format-select" id="transcript-format">
+                                <option value="txt">Plain Text (.txt)</option>
+                                <option value="srt">SubRip (.srt)</option>
+                                <option value="vtt">WebVTT (.vtt)</option>
+                                <option value="json">JSON (.json)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Properties Panel -->
+                <div class="panel tab-content" id="properties-panel">
+                    <div class="panel-header">
+                        <h3>Clip Properties</h3>
+                        <span class="selected-clip-name" id="selected-clip-name">No clip selected</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="property-group">
+                            <label>Volume</label>
+                            <input type="range" min="0" max="200" value="100" class="slider" id="clip-volume">
+                            <span class="property-value" id="clip-volume-value">100%</span>
+                        </div>
+
+                        <div class="property-group">
+                            <label>Speed</label>
+                            <input type="range" min="25" max="400" value="100" class="slider" id="clip-speed">
+                            <span class="property-value" id="clip-speed-value">1.0x</span>
+                        </div>
+
+                        <div class="property-group">
+                            <label>Start Time</label>
+                            <input type="text" value="00:00:00:00" class="input timecode-input" id="clip-start">
+                        </div>
+
+                        <div class="property-group">
+                            <label>Duration</label>
+                            <input type="text" value="00:00:10:00" class="input timecode-input" id="clip-duration">
+                        </div>
+
+                        <div class="property-group">
+                            <label>Opacity (Video only)</label>
+                            <input type="range" min="0" max="100" value="100" class="slider" id="clip-opacity">
+                            <span class="property-value" id="clip-opacity-value">100%</span>
+                        </div>
+
+                        <div class="property-group">
+                            <button class="btn btn-block" id="normalize-audio-btn">
+                                <i class="fas fa-compress-arrows-alt"></i> Normalize Audio
+                            </button>
+                        </div>
+
+                        <div class="property-group">
+                            <button class="btn btn-block" id="remove-noise-btn">
+                                <i class="fas fa-filter"></i> Remove Background Noise
+                            </button>
+                        </div>
+
+                        <div class="property-group">
+                            <label>
+                                <input type="checkbox" id="audio-ducking"> Auto Duck (Lower during speech)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Effects Panel (Subtitles, etc.) -->
+                <div class="panel tab-content" id="effects-panel">
+                    <div class="panel-header">
+                        <h3>Subtitles & Effects</h3>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Subtitle Settings -->
+                        <div class="subtitle-settings">
+                            <h4>Subtitle Style</h4>
+
+                            <div class="property-group">
+                                <label>Font Family</label>
+                                <select class="input" id="subtitle-font">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Courier New">Courier New</option>
+                                    <option value="Impact" selected>Impact</option>
+                                </select>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Font Size</label>
+                                <input type="range" min="12" max="72" value="32" class="slider" id="subtitle-size">
+                                <span class="property-value" id="subtitle-size-value">32px</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Text Color</label>
+                                <input type="color" value="#ffffff" class="color-input" id="subtitle-color">
+                            </div>
+
+                            <div class="property-group">
+                                <label>Background Color</label>
+                                <input type="color" value="#000000" class="color-input" id="subtitle-bg-color">
+                            </div>
+
+                            <div class="property-group">
+                                <label>Background Opacity</label>
+                                <input type="range" min="0" max="100" value="70" class="slider" id="subtitle-bg-opacity">
+                                <span class="property-value" id="subtitle-bg-opacity-value">70%</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Position</label>
+                                <select class="input" id="subtitle-position">
+                                    <option value="top">Top</option>
+                                    <option value="center">Center</option>
+                                    <option value="bottom" selected>Bottom</option>
+                                </select>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Animation</label>
+                                <select class="input" id="subtitle-animation">
+                                    <option value="none" selected>None</option>
+                                    <option value="fade">Fade In/Out</option>
+                                    <option value="typewriter">Typewriter</option>
+                                    <option value="slide-up">Slide Up</option>
+                                </select>
+                            </div>
+
+                            <div class="property-group">
+                                <button class="btn btn-block btn-primary" id="generate-subtitles-btn">
+                                    <i class="fas fa-closed-captioning"></i> Generate Subtitles
+                                </button>
+                            </div>
+
+                            <div class="property-group">
+                                <label>
+                                    <input type="checkbox" id="burn-subtitles"> Burn Into Video
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Silence Detection Settings -->
+                        <div class="silence-settings">
+                            <h4>Silence Detection</h4>
+
+                            <div class="property-group">
+                                <label>Detection Method</label>
+                                <select class="input" id="silence-method">
+                                    <option value="transcript" selected>Transcript-based (Recommended)</option>
+                                    <option value="db">dB Threshold</option>
+                                    <option value="both">Both Methods</option>
+                                </select>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Silence Threshold (dB)</label>
+                                <input type="range" min="-60" max="-10" value="-40" class="slider" id="silence-threshold">
+                                <span class="property-value" id="silence-threshold-value">-40dB</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Minimum Duration (seconds)</label>
+                                <input type="number" min="0.1" max="5" step="0.1" value="0.5" class="input" id="min-silence-duration">
+                            </div>
+
+                            <div class="property-group">
+                                <button class="btn btn-block" id="detect-silence-btn">
+                                    <i class="fas fa-search"></i> Detect Silence
+                                </button>
+                            </div>
+
+                            <div class="property-group">
+                                <button class="btn btn-block btn-danger" id="remove-silence-btn">
+                                    <i class="fas fa-eraser"></i> Remove All Silence
+                                </button>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Compress Silence To (seconds)</label>
+                                <input type="number" min="0" max="2" step="0.1" value="0.2" class="input" id="silence-compress-target">
+                                <button class="btn btn-block" id="compress-silence-btn">
+                                    <i class="fas fa-compress"></i> Compress Silence
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="export-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Video</h2>
+                <button class="modal-close" id="close-export-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="property-group">
+                    <label>Export Quality</label>
+                    <select class="input" id="export-quality">
+                        <option value="web">Web (720p, H.264)</option>
+                        <option value="hd" selected>HD (1080p, H.264)</option>
+                        <option value="4k">4K (2160p, H.265)</option>
+                        <option value="custom">Custom Settings</option>
+                    </select>
+                </div>
+
+                <div class="property-group">
+                    <label>Codec</label>
+                    <select class="input" id="export-codec">
+                        <option value="auto" selected>Auto (Best Quality/Size)</option>
+                        <option value="h264">H.264 (MP4)</option>
+                        <option value="h265">H.265 (MP4)</option>
+                        <option value="vp9">VP9 (WebM)</option>
+                    </select>
+                </div>
+
+                <div class="property-group">
+                    <label>Export Range</label>
+                    <select class="input" id="export-range">
+                        <option value="full" selected>Entire Timeline</option>
+                        <option value="selection">Selected Region</option>
+                        <option value="in-out">In/Out Points</option>
+                    </select>
+                </div>
+
+                <div class="property-group">
+                    <label>
+                        <input type="checkbox" id="export-with-subtitles"> Include Subtitles
+                    </label>
+                </div>
+
+                <div class="export-estimate">
+                    <p>Estimated file size: <strong>~245 MB</strong></p>
+                    <p>Estimated time: <strong>~3 minutes</strong></p>
+                </div>
+
+                <button class="btn btn-primary btn-block btn-large" id="start-export-btn">
+                    <i class="fas fa-rocket"></i> Start Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Toast -->
+    <div class="toast" id="progress-toast">
+        <div class="toast-content">
+            <span class="toast-message">Processing...</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span class="progress-percent" id="progress-percent">0%</span>
+        </div>
+    </div>
+
+    <!-- Marker Comment Popup -->
+    <div class="modal" id="marker-modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>Add Marker Comment</h2>
+                <button class="modal-close" id="close-marker-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="property-group">
+                    <label>Comment</label>
+                    <input type="text" class="input" id="marker-comment-input" placeholder="Enter marker comment..." autofocus>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn" id="cancel-marker-btn">Cancel</button>
+                    <button class="btn btn-primary" id="save-marker-btn">Save Marker</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript (Modular Architecture) -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
