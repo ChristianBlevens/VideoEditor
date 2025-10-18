@@ -1,0 +1,20 @@
+# Web framework
+fastapi
+uvicorn[standard]
+python-multipart
+websockets
+
+# AI/ML
+faster-whisper
+torch
+torchaudio
+pyannote.audio  # Speaker diarization
+webrtcvad  # Voice Activity Detection for silence detection
+
+# Video/Audio processing
+ffmpeg-python
+pydub
+
+# Utilities
+requests
+numpy

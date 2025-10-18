@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Editor - Professional Timeline Editor</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="static/styles.css">
 
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -62,27 +62,7 @@
                     </div>
                     <div class="panel-content">
                         <div class="file-list" id="media-list">
-                            <!-- Sample media files -->
-                            <div class="file-item" draggable="true" data-type="video" data-src="sample1.mp4">
-                                <i class="fas fa-video"></i>
-                                <span>Interview.mp4</span>
-                                <span class="file-duration">05:23</span>
-                            </div>
-                            <div class="file-item" draggable="true" data-type="video" data-src="sample2.mp4">
-                                <i class="fas fa-video"></i>
-                                <span>Screencast.mp4</span>
-                                <span class="file-duration">08:15</span>
-                            </div>
-                            <div class="file-item" draggable="true" data-type="audio" data-src="music.mp3">
-                                <i class="fas fa-music"></i>
-                                <span>Background Music.mp3</span>
-                                <span class="file-duration">03:45</span>
-                            </div>
-                            <div class="file-item" draggable="true" data-type="audio" data-src="voiceover.mp3">
-                                <i class="fas fa-microphone"></i>
-                                <span>Voiceover.mp3</span>
-                                <span class="file-duration">04:30</span>
-                            </div>
+                            <!-- Imported media will appear here -->
                         </div>
                         <button class="btn btn-block" id="import-btn">
                             <i class="fas fa-plus"></i> Import Media
@@ -90,14 +70,7 @@
 
                         <div class="recent-projects">
                             <h4>Recent Projects</h4>
-                            <div class="recent-project-item">
-                                <i class="fas fa-history"></i>
-                                <span>Tutorial Edit.vep</span>
-                            </div>
-                            <div class="recent-project-item">
-                                <i class="fas fa-history"></i>
-                                <span>Podcast Episode 5.vep</span>
-                            </div>
+                            <!-- Recent projects will appear here -->
                         </div>
                     </div>
                 </div>
@@ -108,18 +81,19 @@
                 <!-- Video Preview -->
                 <div class="preview-container">
                     <div class="video-preview">
-                        <!-- Layered video support: top track overlays bottom track -->
-                        <video id="video-layer-1" class="video-element video-layer-bottom">
-                            <source src="" type="video/mp4">
+                        <!-- MSE Playback System (Modern Timeline Playback) -->
+                        <video id="preview-video" class="video-element" style="display: none;">
+                            Your browser does not support the video tag.
                         </video>
-                        <video id="video-layer-2" class="video-element video-layer-top">
-                            <source src="" type="video/mp4">
-                        </video>
+                        <canvas id="preview-canvas" class="video-element"></canvas>
 
-                        <!-- Subtitle overlay -->
-                        <div class="subtitle-overlay" id="subtitle-overlay">
-                            <p class="subtitle-text"></p>
-                        </div>
+                        <!-- Legacy Layered video support (fallback) -->
+                        <video id="video-layer-1" class="video-element video-layer-bottom" style="display: none;">
+                            <source src="" type="video/mp4">
+                        </video>
+                        <video id="video-layer-2" class="video-element video-layer-top" style="display: none;">
+                            <source src="" type="video/mp4">
+                        </video>
 
                         <div class="video-placeholder">
                             <i class="fas fa-film"></i>
@@ -206,9 +180,6 @@
                         <div class="timeline-view-options">
                             <label>
                                 <input type="checkbox" id="show-waveforms" checked> Waveforms
-                            </label>
-                            <label>
-                                <input type="checkbox" id="show-transcripts" checked> Transcripts
                             </label>
                             <label>
                                 <input type="checkbox" id="show-markers" checked> Markers
@@ -329,7 +300,7 @@
                                     </button>
                                 </div>
                                 <span class="track-label">Track 3</span>
-                                <input type="range" class="track-volume" min="0" max="100" value="80" title="Track Volume">
+                                <input type="range" class="track-volume" min="0" max="100" value="100" title="Track Volume">
                             </div>
                             <div class="track-content">
                                 <!-- Clips will be generated by JavaScript -->
@@ -369,6 +340,18 @@
                                 <!-- Markers will be generated by JavaScript -->
                             </div>
                         </div>
+
+                        <!-- Action History Track -->
+                        <div class="track history-track" data-track-id="history">
+                            <div class="track-header">
+                                <span class="track-label">
+                                    <i class="fas fa-history"></i> History
+                                </span>
+                            </div>
+                            <div class="track-content" id="history-track-content">
+                                <!-- Action history timeline will be generated by JavaScript -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -380,75 +363,131 @@
                     <button class="tab-btn active" data-tab="transcript">
                         <i class="fas fa-closed-captioning"></i> Transcript
                     </button>
+                    <button class="tab-btn" data-tab="subtitles">
+                        <i class="fas fa-font"></i> Subtitles
+                    </button>
                     <button class="tab-btn" data-tab="properties">
                         <i class="fas fa-sliders-h"></i> Properties
-                    </button>
-                    <button class="tab-btn" data-tab="effects">
-                        <i class="fas fa-magic"></i> Effects
                     </button>
                 </div>
 
                 <!-- Transcript Panel -->
                 <div class="panel tab-content active" id="transcript-panel">
                     <div class="panel-header">
+                        <h3>Transcript</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span class="selected-clip-name" id="transcript-selected-clip">Select a clip to view transcript</span>
+                            <button class="btn btn-sm" id="transcript-select-all-btn" title="Select all clips">
+                                <i class="fas fa-check-square"></i> Select All
+                            </button>
+                        </div>
                         <button class="btn btn-primary btn-sm btn-block" id="transcribe-btn">
                             <i class="fas fa-microphone"></i> Transcribe Selected Clip
                         </button>
+                        <div class="property-group" style="margin-top: 10px;">
+                            <label>Whisper Model</label>
+                            <select class="input" id="whisper-model-select">
+                                <option value="tiny">Tiny (Fastest)</option>
+                                <option value="base" selected>Base (Recommended)</option>
+                                <option value="small">Small (Better Quality)</option>
+                                <option value="medium">Medium (High Quality)</option>
+                                <option value="large-v3">Large-v3 (Best Quality)</option>
+                            </select>
+                            <small id="model-status" style="color: #888; display: block; margin-top: 5px;">Model: base (ready)</small>
+                        </div>
                     </div>
                     <div class="panel-content">
-                        <!-- AI-powered search buttons -->
-                        <div class="search-shortcuts">
-                            <button class="btn btn-sm btn-outline" id="find-filler-btn">
-                                <i class="fas fa-filter"></i> Find Filler Words
-                            </button>
-                            <button class="btn btn-sm btn-outline" id="find-profanity-btn">
-                                <i class="fas fa-ban"></i> Find Profanity
-                            </button>
-                            <div class="pause-detection-row">
-                                <button class="btn btn-sm btn-outline" id="find-pauses-btn">
-                                    <i class="fas fa-pause"></i> Find Pauses
-                                </button>
-                                <input type="number" class="input input-sm pause-duration-input" id="pause-duration"
-                                       min="0.1" max="10" step="0.1" value="2.0" placeholder="2.0">
-                                <span class="pause-label">seconds</span>
+                        <!-- Target Words Section -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Target Words/Phrases</h4>
+                            <div class="target-words-section">
+                                <textarea class="target-input" id="target-words"
+                                          placeholder="Add words, phrases, or pauses to target...&#10;Example: um, uh, like, pause(2.0s)"
+                                          rows="2"></textarea>
+                                <div class="target-actions-row">
+                                    <button class="btn btn-sm btn-primary" id="isolate-targets-btn" title="Keep only targets">
+                                        <i class="fas fa-check-circle"></i> Isolate
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" id="remove-targets-btn" title="Remove all targets">
+                                        <i class="fas fa-times-circle"></i> Remove
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Target Words Entry -->
-                        <div class="target-words-section">
-                            <label class="section-label">Target Words/Phrases</label>
-                            <textarea class="target-input" id="target-words"
-                                      placeholder="Add words, phrases, or pauses to target...&#10;Example: um, uh, like, pause(2.0s)"
-                                      rows="2"></textarea>
-                            <div class="target-actions-row">
-                                <button class="btn btn-sm btn-primary" id="isolate-targets-btn" title="Keep only targets">
-                                    <i class="fas fa-check-circle"></i> Isolate
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                        <!-- Filler Words Management -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Filler Words</h4>
+
+                            <div class="filler-words-controls">
+                                <button class="btn btn-sm btn-primary btn-block" id="preview-filler-removal-btn">
+                                    <i class="fas fa-eye"></i> Preview & Remove Filler Words
                                 </button>
-                                <button class="btn btn-sm btn-danger" id="remove-targets-btn" title="Remove all targets">
-                                    <i class="fas fa-times-circle"></i> Remove
+
+                                <button class="btn btn-sm btn-outline btn-block" id="manage-filler-words-btn">
+                                    <i class="fas fa-cog"></i> Manage Dictionary
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Search Box -->
-                        <div class="search-box">
-                            <input type="text" placeholder="Search transcript..." class="search-input" id="transcript-search">
-                            <button class="btn btn-icon-sm" title="Previous Match (Shift+F3)" id="prev-match-btn">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                            <button class="btn btn-icon-sm" title="Next Match (F3)" id="next-match-btn">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                        <!-- Pace Analysis -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Pace Analysis</h4>
+                            <p style="color: #888; font-size: 12px; margin: 0 0 10px 0;">Pace analysis runs automatically during transcription. Results appear below.</p>
+                            <div id="pace-analysis-results" style="display: none;">
+                                <!-- Pace analysis results will be rendered here -->
+                            </div>
                         </div>
 
-                        <!-- Search Results Counter -->
-                        <div class="search-results" id="search-results" style="display: none;">
-                            <span class="result-count">0 results</span>
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                        <!-- Search Section -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Search Transcript</h4>
+                            <div class="search-box">
+                                <input type="text" placeholder="Search transcript..." class="search-input" id="transcript-search">
+                                <button class="btn btn-icon-sm" title="Previous Match (Shift+F3)" id="prev-match-btn">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button class="btn btn-icon-sm" title="Next Match (F3)" id="next-match-btn">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
+
+                            <div class="search-results" id="search-results" style="display: none; margin-top: 5px;">
+                                <span class="result-count">0 results</span>
+                            </div>
                         </div>
+
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
 
                         <!-- Transcript Content (clickable, timestamped) -->
-                        <div class="transcript-content" id="transcript-content">
-                            <!-- Transcript items generated procedurally -->
+                        <div>
+                            <h4 style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Transcript</h4>
+                            <div class="transcript-content" id="transcript-content">
+                                <!-- Transcript items generated procedurally -->
+                            </div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                        <!-- Silence Detection Settings -->
+                        <div class="silence-settings">
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Silence Detection</h4>
+                            <p style="color: #888; font-size: 12px; margin: 0 0 15px 0;">Silence detection runs automatically during transcription using a hybrid transcript + VAD approach. All detected silences appear below.</p>
+
+                            <div class="property-group">
+                                <label>Compress Silence To (seconds)</label>
+                                <input type="number" min="0" max="2" step="0.1" value="0.2" class="input" id="silence-compress-target">
+                                <small style="color: #888; display: block; margin-top: 5px;">Set to 0 to remove silence completely</small>
+                                <button class="btn btn-block" id="compress-silence-btn" style="margin-top: 10px;">
+                                    <i class="fas fa-compress"></i> Compress Detected Silences
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Export Transcript -->
@@ -466,70 +505,21 @@
                     </div>
                 </div>
 
-                <!-- Properties Panel -->
-                <div class="panel tab-content" id="properties-panel">
+                <!-- Subtitles Panel -->
+                <div class="panel tab-content" id="subtitles-panel">
                     <div class="panel-header">
-                        <h3>Clip Properties</h3>
-                        <span class="selected-clip-name" id="selected-clip-name">No clip selected</span>
-                    </div>
-                    <div class="panel-content">
-                        <div class="property-group">
-                            <label>Volume</label>
-                            <input type="range" min="0" max="200" value="100" class="slider" id="clip-volume">
-                            <span class="property-value" id="clip-volume-value">100%</span>
-                        </div>
-
-                        <div class="property-group">
-                            <label>Speed</label>
-                            <input type="range" min="25" max="400" value="100" class="slider" id="clip-speed">
-                            <span class="property-value" id="clip-speed-value">1.0x</span>
-                        </div>
-
-                        <div class="property-group">
-                            <label>Start Time</label>
-                            <input type="text" value="00:00:00:00" class="input timecode-input" id="clip-start">
-                        </div>
-
-                        <div class="property-group">
-                            <label>Duration</label>
-                            <input type="text" value="00:00:10:00" class="input timecode-input" id="clip-duration">
-                        </div>
-
-                        <div class="property-group">
-                            <label>Opacity (Video only)</label>
-                            <input type="range" min="0" max="100" value="100" class="slider" id="clip-opacity">
-                            <span class="property-value" id="clip-opacity-value">100%</span>
-                        </div>
-
-                        <div class="property-group">
-                            <button class="btn btn-block" id="normalize-audio-btn">
-                                <i class="fas fa-compress-arrows-alt"></i> Normalize Audio
+                        <h3>Subtitles</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span class="selected-clip-name" id="subtitles-selected-clip">Select a clip to configure subtitles</span>
+                            <button class="btn btn-sm" id="subtitles-select-all-btn" title="Select all clips">
+                                <i class="fas fa-check-square"></i> Select All
                             </button>
                         </div>
-
-                        <div class="property-group">
-                            <button class="btn btn-block" id="remove-noise-btn">
-                                <i class="fas fa-filter"></i> Remove Background Noise
-                            </button>
-                        </div>
-
-                        <div class="property-group">
-                            <label>
-                                <input type="checkbox" id="audio-ducking"> Auto Duck (Lower during speech)
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Effects Panel (Subtitles, etc.) -->
-                <div class="panel tab-content" id="effects-panel">
-                    <div class="panel-header">
-                        <h3>Subtitles & Effects</h3>
                     </div>
                     <div class="panel-content">
                         <!-- Subtitle Settings -->
                         <div class="subtitle-settings">
-                            <h4>Subtitle Style</h4>
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Subtitle Style</h4>
 
                             <div class="property-group">
                                 <label>Font Family</label>
@@ -583,65 +573,137 @@
                                 </select>
                             </div>
 
+                            <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Subtitle Grouping</h4>
+
                             <div class="property-group">
-                                <button class="btn btn-block btn-primary" id="generate-subtitles-btn">
-                                    <i class="fas fa-closed-captioning"></i> Generate Subtitles
+                                <label>Display Mode</label>
+                                <select class="input" id="subtitle-display-mode">
+                                    <option value="full" selected>Full Sentence</option>
+                                    <option value="max-words">Max Words</option>
+                                </select>
+                            </div>
+
+                            <div class="property-group" id="max-words-group">
+                                <label>Max Words Per Subtitle</label>
+                                <input type="number" min="1" max="20" value="4" class="input" id="subtitle-max-words">
+                            </div>
+
+                            <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Position Controls</h4>
+
+                            <div class="property-group">
+                                <label>Horizontal Offset (X)</label>
+                                <input type="range" min="-500" max="500" value="0" class="slider" id="subtitle-offset-x">
+                                <span class="property-value" id="subtitle-offset-x-value">0px</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Vertical Offset (Y)</label>
+                                <input type="range" min="-300" max="300" value="0" class="slider" id="subtitle-offset-y">
+                                <span class="property-value" id="subtitle-offset-y-value">0px</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>
+                                    <input type="checkbox" id="enable-subtitles"> Enable Subtitles
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Properties Panel -->
+                <div class="panel tab-content" id="properties-panel">
+                    <div class="panel-header">
+                        <h3>Clip Properties</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" class="selected-clip-name-input" id="selected-clip-name" value="No clip selected" readonly style="background: transparent; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; color: var(--text-primary); flex: 1; font-size: 13px;">
+                            <button class="btn btn-sm" id="properties-select-all-btn" title="Select all clips">
+                                <i class="fas fa-check-square"></i> Select All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Playback & Timing</h4>
+
+                            <div class="property-group">
+                                <label>Volume</label>
+                                <input type="range" min="0" max="200" value="100" class="slider" id="clip-volume">
+                                <span class="property-value" id="clip-volume-value">100%</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Speed</label>
+                                <input type="range" min="25" max="400" value="100" class="slider" id="clip-speed">
+                                <span class="property-value" id="clip-speed-value">1.0x</span>
+                            </div>
+
+                            <div class="property-group">
+                                <label>Opacity (Video only)</label>
+                                <input type="range" min="0" max="100" value="100" class="slider" id="clip-opacity">
+                                <span class="property-value" id="clip-opacity-value">100%</span>
+                            </div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Timing</h4>
+
+                            <div class="property-group">
+                                <label>Start Time</label>
+                                <input type="text" value="00:00:00:00" class="input timecode-input" id="clip-start">
+                            </div>
+
+                            <div class="property-group">
+                                <label>Duration</label>
+                                <input type="text" value="00:00:10:00" class="input timecode-input" id="clip-duration">
+                            </div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                        <div>
+                            <h4 style="margin: 0 0 15px 0; padding: 0; font-size: 14px; color: #888; text-transform: uppercase;">Audio Processing</h4>
+
+                            <div class="property-group">
+                                <button class="btn btn-block" id="normalize-audio-btn">
+                                    <i class="fas fa-compress-arrows-alt"></i> Normalize Audio
+                                </button>
+                            </div>
+
+                            <div class="property-group">
+                                <button class="btn btn-block" id="remove-noise-btn">
+                                    <i class="fas fa-filter"></i> Remove Background Noise
                                 </button>
                             </div>
 
                             <div class="property-group">
                                 <label>
-                                    <input type="checkbox" id="burn-subtitles"> Burn Into Video
+                                    <input type="checkbox" id="audio-ducking"> Auto Duck (Lower during speech)
                                 </label>
                             </div>
-                        </div>
-
-                        <!-- Silence Detection Settings -->
-                        <div class="silence-settings">
-                            <h4>Silence Detection</h4>
-
-                            <div class="property-group">
+                            <div class="property-group" id="ducking-settings" style="display: none;">
+                                <label>Reduction Amount (dB)</label>
+                                <input type="range" min="-20" max="-6" value="-12" step="1" class="slider" id="ducking-reduction">
+                                <span class="property-value" id="ducking-reduction-value">-12 dB</span>
+                            </div>
+                            <div class="property-group" id="ducking-method" style="display: none;">
                                 <label>Detection Method</label>
-                                <select class="input" id="silence-method">
-                                    <option value="transcript" selected>Transcript-based (Recommended)</option>
-                                    <option value="db">dB Threshold</option>
-                                    <option value="both">Both Methods</option>
+                                <select class="input" id="ducking-detect-method">
+                                    <option value="transcript" selected>Transcript (Most Accurate)</option>
+                                    <option value="vad">Voice Activity Detection</option>
+                                    <option value="always">Always When Playing</option>
                                 </select>
-                            </div>
-
-                            <div class="property-group">
-                                <label>Silence Threshold (dB)</label>
-                                <input type="range" min="-60" max="-10" value="-40" class="slider" id="silence-threshold">
-                                <span class="property-value" id="silence-threshold-value">-40dB</span>
-                            </div>
-
-                            <div class="property-group">
-                                <label>Minimum Duration (seconds)</label>
-                                <input type="number" min="0.1" max="5" step="0.1" value="0.5" class="input" id="min-silence-duration">
-                            </div>
-
-                            <div class="property-group">
-                                <button class="btn btn-block" id="detect-silence-btn">
-                                    <i class="fas fa-search"></i> Detect Silence
-                                </button>
-                            </div>
-
-                            <div class="property-group">
-                                <button class="btn btn-block btn-danger" id="remove-silence-btn">
-                                    <i class="fas fa-eraser"></i> Remove All Silence
-                                </button>
-                            </div>
-
-                            <div class="property-group">
-                                <label>Compress Silence To (seconds)</label>
-                                <input type="number" min="0" max="2" step="0.1" value="0.2" class="input" id="silence-compress-target">
-                                <button class="btn btn-block" id="compress-silence-btn">
-                                    <i class="fas fa-compress"></i> Compress Silence
-                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
+
             </aside>
         </div>
     </div>
@@ -656,44 +718,106 @@
                 </button>
             </div>
             <div class="modal-body">
+                <!-- Platform Presets -->
                 <div class="property-group">
-                    <label>Export Quality</label>
-                    <select class="input" id="export-quality">
-                        <option value="web">Web (720p, H.264)</option>
-                        <option value="hd" selected>HD (1080p, H.264)</option>
-                        <option value="4k">4K (2160p, H.265)</option>
+                    <label>Platform Preset</label>
+                    <select class="input" id="export-preset">
                         <option value="custom">Custom Settings</option>
+                        <optgroup label="YouTube">
+                            <option value="youtube-hd">YouTube (1080p 16:9)</option>
+                            <option value="youtube-4k">YouTube (4K 16:9)</option>
+                            <option value="youtube-short">YouTube Shorts (1080x1920)</option>
+                        </optgroup>
+                        <optgroup label="TikTok">
+                            <option value="tiktok">TikTok (1080x1920)</option>
+                        </optgroup>
+                        <optgroup label="Instagram">
+                            <option value="instagram-feed">Instagram Feed (1080x1080)</option>
+                            <option value="instagram-story">Instagram Story (1080x1920)</option>
+                            <option value="instagram-reel">Instagram Reel (1080x1920)</option>
+                        </optgroup>
+                        <optgroup label="Twitter/X">
+                            <option value="twitter">Twitter/X (1280x720)</option>
+                        </optgroup>
+                        <optgroup label="Facebook">
+                            <option value="facebook">Facebook (1280x720)</option>
+                        </optgroup>
                     </select>
                 </div>
 
-                <div class="property-group">
-                    <label>Codec</label>
-                    <select class="input" id="export-codec">
-                        <option value="auto" selected>Auto (Best Quality/Size)</option>
-                        <option value="h264">H.264 (MP4)</option>
-                        <option value="h265">H.265 (MP4)</option>
-                        <option value="vp9">VP9 (WebM)</option>
-                    </select>
+                <!-- Preset Info Display -->
+                <div class="preset-info" id="preset-info" style="display: none;">
+                    <div class="preset-info-grid">
+                        <div class="preset-info-item">
+                            <i class="fas fa-film"></i>
+                            <span class="preset-label">Resolution</span>
+                            <span class="preset-value" id="preset-resolution">-</span>
+                        </div>
+                        <div class="preset-info-item">
+                            <i class="fas fa-expand"></i>
+                            <span class="preset-label">Aspect Ratio</span>
+                            <span class="preset-value" id="preset-aspect">-</span>
+                        </div>
+                        <div class="preset-info-item">
+                            <i class="fas fa-clock"></i>
+                            <span class="preset-label">Max Length</span>
+                            <span class="preset-value" id="preset-length">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+
+                <!-- Custom Settings (shown when custom selected) -->
+                <div class="custom-export-settings" id="custom-export-settings">
+                    <div class="property-group">
+                        <label>Resolution</label>
+                        <select class="input" id="export-quality">
+                            <option value="720p">HD (720p)</option>
+                            <option value="1080p" selected>Full HD (1080p)</option>
+                            <option value="1440p">2K (1440p)</option>
+                            <option value="2160p">4K (2160p)</option>
+                        </select>
+                    </div>
+
+                    <div class="property-group">
+                        <label>Aspect Ratio</label>
+                        <select class="input" id="export-aspect">
+                            <option value="16:9" selected>16:9 (Landscape)</option>
+                            <option value="9:16">9:16 (Portrait)</option>
+                            <option value="1:1">1:1 (Square)</option>
+                            <option value="4:5">4:5 (Instagram)</option>
+                        </select>
+                    </div>
+
+                    <div class="property-group">
+                        <label>Codec</label>
+                        <select class="input" id="export-codec">
+                            <option value="h264" selected>H.264 (MP4)</option>
+                            <option value="h265">H.265 (MP4)</option>
+                            <option value="vp9">VP9 (WebM)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="property-group">
                     <label>Export Range</label>
                     <select class="input" id="export-range">
                         <option value="full" selected>Entire Timeline</option>
-                        <option value="selection">Selected Region</option>
+                        <option value="selection">Selected Clips</option>
                         <option value="in-out">In/Out Points</option>
                     </select>
                 </div>
 
                 <div class="property-group">
                     <label>
-                        <input type="checkbox" id="export-with-subtitles"> Include Subtitles
+                        <input type="checkbox" id="export-with-subtitles"> Include Subtitles (Burned In)
                     </label>
                 </div>
 
-                <div class="export-estimate">
-                    <p>Estimated file size: <strong>~245 MB</strong></p>
-                    <p>Estimated time: <strong>~3 minutes</strong></p>
+                <div class="export-estimate" id="export-estimate">
+                    <p>Estimated file size: <strong id="estimate-size">~245 MB</strong></p>
+                    <p>Estimated time: <strong id="estimate-time">~3 minutes</strong></p>
                 </div>
 
                 <button class="btn btn-primary btn-block btn-large" id="start-export-btn">
@@ -736,7 +860,42 @@
         </div>
     </div>
 
+    <!-- Filler Words Dictionary Modal -->
+    <div class="modal" id="filler-dictionary-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Filler Words Dictionary</h2>
+                <button class="modal-close" onclick="document.getElementById('filler-dictionary-modal').style.display='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="property-group">
+                    <label>Add Custom Word/Phrase</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="input" id="custom-filler-input" placeholder="e.g., basically, you know">
+                        <button class="btn btn-primary" id="add-filler-word-btn">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <label>Current Dictionary</label>
+                    <div class="filler-words-list" id="filler-words-list">
+                        <!-- Filler words will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Application JavaScript (Modular Architecture) -->
-    <script type="module" src="js/main.js"></script>
+    <!-- Keyboard Shortcuts Help Indicator -->
+    <div class="help-indicator" onclick="document.dispatchEvent('keydown', {key: '?'}));">
+        <i class="fas fa-question"></i>
+    </div>
+
+    <script type="module" src="static/js/core/main.js"></script>
 </body>
 </html>
